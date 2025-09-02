@@ -1,0 +1,612 @@
+// package.json - /Users/daniel/dev/football-script/package.json
+{
+  "name": "@footballscript/core",
+  "version": "1.0.0",
+  "description": "FootballScript - Educational Programming Language for Young Chelsea Fans",
+  "main": "dist/index.js",
+  "bin": {
+    "chelsea": "./cli/index.js",
+    "footballscript": "./cli/index.js",
+    "fsc": "./cli/index.js"
+  },
+  "scripts": {
+    "start": "node playground/server.js",
+    "build": "tsc && webpack",
+    "compile": "tsc compiler/index.ts --outDir dist",
+    "test": "jest",
+    "dev": "nodemon playground/server.js",
+    "playground": "open http://localhost:3000 && npm start",
+    "docs": "typedoc --out docs compiler/index.ts",
+    "lint": "eslint . --ext .ts,.js",
+    "format": "prettier --write '**/*.{ts,js,json,md}'",
+    "tutorial": "node tutorials/launcher.js",
+    "stamford": "node package-manager/index.js"
+  },
+  "keywords": [
+    "programming-language",
+    "educational",
+    "chelsea-fc",
+    "football",
+    "kids-coding",
+    "visual-programming",
+    "javascript-transpiler"
+  ],
+  "author": "FootballScript Team",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "express": "^4.18.2",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.12",
+    "ora": "^7.0.1",
+    "socket.io": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/express": "^4.17.21",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "prettier": "^3.1.1",
+    "ts-node": "^10.9.2",
+    "typedoc": "^0.25.4",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/footballscript/core.git"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
+
+---
+
+// cli/index.js - /Users/daniel/dev/football-script/cli/index.js
+#!/usr/bin/env node
+
+const { program } = require('commander');
+const chalk = require('chalk');
+const fs = require('fs-extra');
+const path = require('path');
+const { spawn } = require('child_process');
+const ora = require('ora');
+const inquirer = require('inquirer');
+
+// ASCII Art Logo
+const logo = `
+${chalk.blue('╔══════════════════════════════════════╗')}
+${chalk.blue('║')}  ⚽  ${chalk.bold.white('FootballScript')} ${chalk.blue('- Chelsea FC')}  ⚽  ${chalk.blue('║')}
+${chalk.blue('║')}     ${chalk.gray('Keep The Blue Flag Flying High')}    ${chalk.blue('║')}
+${chalk.blue('╚══════════════════════════════════════╝')}
+`;
+
+// Program configuration
+program
+  .name('chelsea')
+  .description('FootballScript CLI - Code like a Chelsea Legend!')
+  .version('1.0.0');
+
+// Run command
+program
+  .command('run <file>')
+  .alias('kickoff')
+  .description('Execute a FootballScript program at Stamford Bridge')
+  .option('-d, --debug', 'Enable VAR review mode (debugging)')
+  .option('-w, --watch', 'Watch for changes (training mode)')
+  .action(async (file, options) => {
+    console.log(logo);
+
+    const spinner = ora(`⚽ Preparing match at Stamford Bridge...`).start();
+
+    try {
+      // Check if file exists
+      if (!await fs.pathExists(file)) {
+        spinner.fail(chalk.red(`❌ File not found: ${file}`));
+        return;
+      }
+
+      // Read the FootballScript code
+      const code = await fs.readFile(file, 'utf-8');
+      spinner.text = 'Compiling FootballScript to JavaScript...';
+
+      // Import and use the compiler
+      const { FootballScriptCompiler } = require('../dist/compiler');
+      const compiler = new FootballScriptCompiler();
+      const jsCode = compiler.compile(code);
+
+      // Create temporary JS file
+      const tempFile = path.join(path.dirname(file), `.temp_${path.basename(file, '.fsc')}.js`);
+      await fs.writeFile(tempFile, jsCode);
+
+      spinner.succeed(chalk.green('✅ Compilation successful!'));
+
+      // Execute the compiled code
+      console.log(chalk.blue('\n🏟️  Match starting at Stamford Bridge!\n'));
+
+      const child = spawn('node', [tempFile], { stdio: 'inherit' });
+
+      child.on('close', async (code) => {
+        // Clean up temp file
+        await fs.remove(tempFile);
+
+        if (code === 0) {
+          console.log(chalk.green('\n⚽ Full time! Match completed successfully!'));
+        } else {
+          console.log(chalk.red(`\n❌ Match ended with errors (exit code: ${code})`));
+        }
+      });
+
+      // Watch mode
+      if (options.watch) {
+        console.log(chalk.yellow('\n👀 Training mode active - watching for changes...'));
+        const chokidar = require('chokidar');
+        chokidar.watch(file).on('change', () => {
+          console.log(chalk.yellow('\n🔄 Code changed - restarting match...'));
+          child.kill();
+          program.parse(process.argv);
+        });
+      }
+
+    } catch (error) {
+      spinner.fail(chalk.red(`❌ Compilation error: ${error.message}`));
+      if (options.debug) {
+        console.error(error);
+      }
+    }
+  });
+
+// Compile command
+program
+  .command('compile <file>')
+  .alias('build')
+  .description('Compile FootballScript to JavaScript')
+  .option('-o, --output <file>', 'Output file path')
+  .option('-r, --react', 'Compile to React component')
+  .option('-p, --p5', 'Compile to p5.js sketch')
+  .action(async (file, options) => {
+    const spinner = ora('Compiling FootballScript...').start();
+
+    try {
+      const code = await fs.readFile(file, 'utf-8');
+      const { FootballScriptCompiler } = require('../dist/compiler');
+      const compiler = new FootballScriptCompiler();
+
+      let output;
+      if (options.react) {
+        output = compiler.compileToReact(code);
+        spinner.text = 'Compiling to React component...';
+      } else if (options.p5) {
+        output = compiler.compileToP5(code);
+        spinner.text = 'Compiling to p5.js sketch...';
+      } else {
+        output = compiler.compile(code);
+      }
+
+      const outputPath = options.output || file.replace('.fsc', '.js');
+      await fs.writeFile(outputPath, output);
+
+      spinner.succeed(chalk.green(`✅ Compiled to ${outputPath}`));
+    } catch (error) {
+      spinner.fail(chalk.red(`❌ Compilation failed: ${error.message}`));
+    }
+  });
+
+// New project command
+program
+  .command('init [name]')
+  .alias('new-season')
+  .description('Start a new FootballScript project')
+  .action(async (name) => {
+    console.log(logo);
+
+    const answers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'projectName',
+        message: 'Project name:',
+        default: name || 'my-chelsea-project'
+      },
+      {
+        type: 'list',
+        name: 'level',
+        message: 'Choose your level:',
+        choices: [
+          { name: '⚽ Youth Academy (Beginner)', value: 'youth' },
+          { name: '🏃 First Team (Intermediate)', value: 'first' },
+          { name: '🏆 Champions League (Advanced)', value: 'champions' }
+        ]
+      },
+      {
+        type: 'list',
+        name: 'template',
+        message: 'Choose a starter template:',
+        choices: [
+          { name: '🎯 Penalty Practice', value: 'penalty' },
+          { name: '⚡ Passing Drill', value: 'passing' },
+          { name: '🏃 Dribbling Challenge', value: 'dribbling' },
+          { name: '🎮 Match Simulator', value: 'match' },
+          { name: '📊 Team Manager', value: 'manager' },
+          { name: '🆕 Blank Project', value: 'blank' }
+        ]
+      }
+    ]);
+
+    const spinner = ora('Creating new FootballScript project...').start();
+
+    try {
+      const projectPath = path.join(process.cwd(), answers.projectName);
+      await fs.ensureDir(projectPath);
+
+      // Create project structure
+      await fs.ensureDir(path.join(projectPath, 'src'));
+      await fs.ensureDir(path.join(projectPath, 'assets'));
+      await fs.ensureDir(path.join(projectPath, 'tests'));
+
+      // Create main file based on template
+      const mainFile = getTemplate(answers.template, answers.level);
+      await fs.writeFile(path.join(projectPath, 'src', 'main.fsc'), mainFile);
+
+      // Create project config
+      const config = {
+        name: answers.projectName,
+        version: '1.0.0',
+        level: answers.level,
+        template: answers.template,
+        created: new Date().toISOString()
+      };
+
+      await fs.writeJSON(path.join(projectPath, 'footballscript.json'), config, { spaces: 2 });
+
+      // Create README
+      const readme = `# ${answers.projectName}
+
+A FootballScript project for Chelsea FC fans!
+
+## Level: ${answers.level}
+
+## How to Run
+\`\`\`bash
+chelsea run src/main.fsc
+\`\`\`
+
+## Learn More
+Visit the FootballScript documentation to learn more!
+
+Keep The Blue Flag Flying High! 💙
+`;
+
+      await fs.writeFile(path.join(projectPath, 'README.md'), readme);
+
+      spinner.succeed(chalk.green(`✅ Project created at ${projectPath}`));
+
+      console.log('\nNext steps:');
+      console.log(chalk.cyan(`  cd ${answers.projectName}`));
+      console.log(chalk.cyan('  chelsea run src/main.fsc'));
+      console.log(chalk.cyan('  chelsea playground'));
+
+    } catch (error) {
+      spinner.fail(chalk.red(`❌ Failed to create project: ${error.message}`));
+    }
+  });
+
+// REPL command
+program
+  .command('repl')
+  .alias('commentary')
+  .description('Start interactive FootballScript session')
+  .action(async () => {
+    console.log(logo);
+    console.log(chalk.blue('⚽ Welcome to FootballScript Interactive Mode!'));
+    console.log(chalk.gray('Type "help" for commands, "exit" to quit\n'));
+
+    const { FootballScriptCompiler } = require('../dist/compiler');
+    const compiler = new FootballScriptCompiler();
+    const runtime = new (require('../dist/runtime'))();
+
+    const repl = require('repl');
+    const replServer = repl.start({
+      prompt: chalk.blue('chelsea> '),
+      eval: async (input, context, filename, callback) => {
+        try {
+          if (input.trim() === 'help') {
+            console.log(`
+Available commands:
+  player NAME = NUMBER  - Create a player
+  shoot(NAME)          - Make player shoot
+  pass(FROM to TO)     - Pass between players
+  celebrate()          - Celebrate a goal
+  clear()             - Clear the field
+  exit                - Exit REPL
+            `);
+            callback(null);
+            return;
+          }
+
+          const jsCode = compiler.compile(input);
+          eval(jsCode);
+          callback(null);
+        } catch (error) {
+          callback(null, chalk.red(`Error: ${error.message}`));
+        }
+      }
+    });
+
+    replServer.context.runtime = runtime;
+  });
+
+// Playground command
+program
+  .command('playground')
+  .alias('bridge')
+  .description('Open FootballScript visual playground')
+  .option('-p, --port <port>', 'Port number', '3000')
+  .action(async (options) => {
+    console.log(logo);
+
+    const spinner = ora('Starting FootballScript Playground...').start();
+
+    try {
+      const playgroundPath = path.join(__dirname, '..', 'playground', 'server.js');
+
+      if (!await fs.pathExists(playgroundPath)) {
+        // Create a simple server if it doesn't exist
+        const serverCode = `
+const express = require('express');
+const path = require('path');
+const app = express();
+const port = ${options.port};
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(port, () => {
+  console.log('⚽ FootballScript Playground running at http://localhost:' + port);
+});
+`;
+        await fs.ensureDir(path.dirname(playgroundPath));
+        await fs.writeFile(playgroundPath, serverCode);
+      }
+
+      spinner.succeed(chalk.green('✅ Playground started!'));
+      console.log(chalk.blue(`\n🏟️  Open http://localhost:${options.port} in your browser\n`));
+
+      const child = spawn('node', [playgroundPath], { stdio: 'inherit' });
+
+      // Open browser
+      const open = require('open');
+      setTimeout(() => {
+        open(`http://localhost:${options.port}`);
+      }, 1500);
+
+    } catch (error) {
+      spinner.fail(chalk.red(`❌ Failed to start playground: ${error.message}`));
+    }
+  });
+
+// Test command
+program
+  .command('test [file]')
+  .alias('training')
+  .description('Run FootballScript tests (Cobham training ground)')
+  .action(async (file) => {
+    console.log(chalk.blue('🏃 Starting training session at Cobham...'));
+
+    const testFile = file || 'tests/**/*.fsc';
+    const spinner = ora('Running tests...').start();
+
+    try {
+      // Run tests
+      const child = spawn('npm', ['test', testFile], { stdio: 'inherit' });
+
+      child.on('close', (code) => {
+        if (code === 0) {
+          spinner.succeed(chalk.green('✅ All tests passed! Squad is ready!'));
+        } else {
+          spinner.fail(chalk.red('❌ Some tests failed. More training needed!'));
+        }
+      });
+    } catch (error) {
+      spinner.fail(chalk.red(`❌ Test runner error: ${error.message}`));
+    }
+  });
+
+// Format command
+program
+  .command('format <file>')
+  .alias('tactics')
+  .description('Format FootballScript code with Lampard precision')
+  .action(async (file) => {
+    const spinner = ora('Formatting code...').start();
+
+    try {
+      const code = await fs.readFile(file, 'utf-8');
+      const formatted = formatFootballScript(code);
+      await fs.writeFile(file, formatted);
+
+      spinner.succeed(chalk.green(`✅ Code formatted with Chelsea style!`));
+    } catch (error) {
+      spinner.fail(chalk.red(`❌ Formatting failed: ${error.message}`));
+    }
+  });
+
+// Legends command (easter egg)
+program
+  .command('legends')
+  .description('Show Chelsea FC legends')
+  .action(() => {
+    console.log(logo);
+    console.log(chalk.blue('\n⭐ Chelsea FC Legends ⭐\n'));
+
+    const legends = [
+      { name: 'Frank Lampard', number: 8, role: 'Midfielder', emoji: '🎯' },
+      { name: 'John Terry', number: 26, role: 'Defender', emoji: '🛡️' },
+      { name: 'Didier Drogba', number: 11, role: 'Striker', emoji: '⚡' },
+      { name: 'Eden Hazard', number: 10, role: 'Winger', emoji: '✨' },
+      { name: 'Petr Čech', number: 1, role: 'Goalkeeper', emoji: '🧤' },
+      { name: 'N\'Golo Kanté', number: 7, role: 'Midfielder', emoji: '🏃' },
+      { name: 'Gianfranco Zola', number: 25, role: 'Forward', emoji: '🎨' },
+      { name: 'Peter Osgood', number: 9, role: 'Striker', emoji: '👑' }
+    ];
+
+    legends.forEach(legend => {
+      console.log(`${legend.emoji}  ${chalk.bold(legend.name)} - #${legend.number} (${legend.role})`);
+    });
+
+    console.log(chalk.gray('\n"The Pride of London" 💙'));
+  });
+
+// Helper function to get templates
+function getTemplate(template, level) {
+  const templates = {
+    penalty: `// Penalty Practice Game
+// Level: ${level}
+
+player palmer = 20
+player jackson = 15
+player sterling = 7
+
+// Take penalties
+drill 5 times {
+    shoot(palmer)
+    celebrate()
+}
+
+chant("Blue is the colour!")`,
+
+    passing: `// Passing Drill
+// Level: ${level}
+
+// Create the midfield
+midfielder mount = 19
+midfielder enzo = 8
+midfielder gallagher = 23
+
+// Triangle passing
+drill 10 times {
+    pass(mount to enzo)
+    pass(enzo to gallagher)
+    pass(gallagher to mount)
+}
+
+shoot(mount)`,
+
+    dribbling: `// Dribbling Challenge
+// Level: ${level}
+
+player mudryk = 10
+
+// Dribble through cones
+move mudryk to (20, 50)
+
+drill 5 times {
+    dribble(mudryk)
+    move mudryk to (mudryk.x + 10, 50)
+}
+
+shoot(mudryk)`,
+
+    match: `// Match Simulator
+// Level: ${level}
+
+formation Chelsea433 {
+    goalkeeper sanchez = 1
+    defender james = 24
+    defender silva = 6
+    defender colwill = 26
+    defender chilwell = 21
+    midfielder enzo = 8
+    midfielder caicedo = 25
+    midfielder palmer = 20
+    striker jackson = 15
+    striker sterling = 7
+    striker mudryk = 10
+}
+
+play kickoff() {
+    pass(enzo to palmer)
+    pass(palmer to jackson)
+    shoot(jackson)
+}
+
+kickoff()`,
+
+    manager: `// Team Manager
+// Level: ${level}
+
+team ChelseaFC {
+    squad: [],
+    tactics: "4-3-3",
+
+    play signPlayer(name, number) {
+        player newPlayer = number
+        this.squad.push(newPlayer)
+        celebrate()
+    }
+
+    play matchday() {
+        for each player in this.squad {
+            highlight(player)
+        }
+    }
+}
+
+myTeam = new ChelseaFC()
+myTeam.signPlayer("Palmer", 20)
+myTeam.matchday()`,
+
+    blank: `// FootballScript Project
+// Keep The Blue Flag Flying High! 💙
+
+// Your code starts here
+player mount = 19
+
+shoot(mount)
+celebrate()
+`
+  };
+
+  return templates[template] || templates.blank;
+}
+
+// Helper function to format FootballScript code
+function formatFootballScript(code) {
+  // Simple formatter - in production, this would be more sophisticated
+  const lines = code.split('\n');
+  let formatted = [];
+  let indent = 0;
+
+  for (let line of lines) {
+    const trimmed = line.trim();
+
+    if (trimmed.endsWith('{')) {
+      formatted.push('  '.repeat(indent) + trimmed);
+      indent++;
+    } else if (trimmed === '}') {
+      indent = Math.max(0, indent - 1);
+      formatted.push('  '.repeat(indent) + trimmed);
+    } else if (trimmed) {
+      formatted.push('  '.repeat(indent) + trimmed);
+    } else {
+      formatted.push('');
+    }
+  }
+
+  return formatted.join('\n');
+}
+
+// Parse arguments
+program.parse(process.argv);
+
+// Show help if no command provided
+if (!process.argv.slice(2).length) {
+  console.log(logo);
+  program.outputHelp();
+}

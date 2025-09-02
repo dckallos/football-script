@@ -1,0 +1,468 @@
+# FootballScript: Educational Programming Language for Young Chelsea Fans
+## A Visual, Interactive Language for Learning to Code Through Football
+
+You are creating **FootballScript**, an educational programming language designed for a bright 9-year-old Chelsea FC fan. The language should make programming concepts intuitive through football metaphors while compiling to JavaScript for seamless web integration.
+
+**Project Location**: `/Users/daniel/dev/football-script`
+**Implementation Instruction**: Create all files and folders directly in this local directory. The implementation should be complete and functional, ready to run from this location.
+
+## Core Design Principles
+
+### 1. **Educational First**
+- Progressive difficulty levels (Youth Academy → First Team → Champions League)
+- Visual feedback for every action (see the ball move, players animate)
+- Immediate results that are fun to watch
+- Built-in tutorials disguised as "training drills"
+- Error messages that teach, not frustrate
+
+### 2. **Visual by Design**
+- Compiles to JavaScript for web integration
+- First-class support for React, p5.js, and Three.js
+- Every program can be visualized as a football match
+- Built-in football field coordinate system
+- Sprite-based player representations
+
+### 3. **Chelsea FC Theme (Age-Appropriate)**
+- Focus on current players kids know and love
+- Celebratory sounds and animations
+- Chelsea blue color scheme
+- Stamford Bridge as the "home" environment
+
+## Implementation Strategy
+
+### Target: JavaScript Transpiler
+```
+FootballScript (.fsc) → AST → JavaScript → Browser/Node.js
+```
+
+### Directory Structure (Simplified)
+Create the following structure in `/Users/daniel/dev/football-script`:
+```
+/Users/daniel/dev/football-script/
+├── compiler/           # TypeScript-based transpiler to JS
+├── runtime/           # JS runtime library
+├── visual/            # Visual components & integrations
+│   ├── react/        # React components
+│   ├── p5/           # p5.js templates
+│   └── canvas/       # Canvas API helpers
+├── playground/        # Web-based IDE
+├── tutorials/         # Interactive lessons
+├── games/            # Sample games
+└── docs/             # Kid-friendly documentation
+```
+
+All files should be created and saved directly to `/Users/daniel/dev/football-script/` on the local machine.
+
+## Language Design (Educational Focus)
+
+### Level 1: Youth Academy (Ages 8-10)
+
+#### Simple Variables and Actions
+```footballscript
+// Players are variables - visual representation shows jersey numbers
+player mount = 19
+player havertz = 29
+
+// Ball is the main data object
+ball myBall = "⚽"
+
+// Simple actions with immediate visual feedback
+kick(mount, myBall)      // See Mount kick the ball
+pass(mount to havertz)   // Watch the pass animation
+shoot(havertz)           // See the shot at goal!
+```
+
+#### Visual Coordinate System
+```footballscript
+// Football field as coordinate system (0-100 for both x and y)
+move mount to (50, 75)   // Move to attacking position
+move ball to (90, 50)    // Ball near goal
+
+// Visual grid overlay helps understand coordinates
+showGrid()               // Shows coordinate grid
+hideGrid()              // Hides grid
+```
+
+#### Simple Loops with Visual Feedback
+```footballscript
+// Training drills - each iteration shows on screen
+drill 5 times {
+    dribble(mount)       // See Mount dribble 5 times
+    wait(1 second)       // Pause between actions
+}
+
+// Count goals visually
+goals = 0
+drill until goals == 3 {
+    if (shoot(havertz) == "GOAL!") {
+        goals = goals + 1
+        celebrate()      // Fireworks animation!
+    }
+}
+```
+
+### Level 2: First Team (Ages 10-12)
+
+#### Functions as Tactics
+```footballscript
+// Define plays with visual execution
+tactic cornerKick() {
+    position james at (85, 10)
+    position havertz at (88, 50)
+    cross(james to havertz)
+    header(havertz)
+}
+
+// Call the tactic - watch it execute on screen
+cornerKick()
+```
+
+#### Interactive Input
+```footballscript
+// Get input from young programmers
+ask "Who should take the penalty?" -> shooter
+ask "Which corner? (left/right)" -> corner
+
+if (corner == "left") {
+    shoot(shooter, "left")
+} else {
+    shoot(shooter, "right")
+}
+```
+
+#### Lists as Squads
+```footballscript
+// Visual team lineup
+squad chelsea = [sanchez, james, silva, chilwell, mount, havertz]
+
+// Loop through squad with visual highlighting
+for each player in chelsea {
+    highlight(player)    // Player glows on screen
+    showStats(player)    // Display player card
+    wait(2 seconds)
+}
+```
+
+### Level 3: Champions League (Advanced)
+
+#### Objects as Teams
+```footballscript
+// More complex team management
+team Chelsea {
+    players: [mount, havertz, james],
+    formation: "4-3-3",
+
+    play attack() {
+        for each player in this.players {
+            moveForward(player, 10)
+        }
+    }
+}
+
+// Create and use team
+myTeam = new Chelsea()
+myTeam.attack()
+```
+
+#### Events and Interactions
+```footballscript
+// React to user input
+when mouseClicked on pitch {
+    moveBall to mousePosition
+}
+
+when key "SPACE" pressed {
+    shoot(nearestPlayer())
+}
+
+when ball reaches goal {
+    celebrate()
+    score = score + 1
+}
+```
+
+## Visual Integration Features
+
+### 1. **Built-in Visual Components**
+```footballscript
+// Automatic visual representation
+field = new FootballField()      // Creates interactive pitch
+field.showOn("canvas-div")       // Renders to HTML element
+
+// Player sprites with animations
+mount.sprite = "mount.png"       // Assign sprite
+mount.animate("run")              // Play animation
+```
+
+### 2. **React Component Generation**
+```footballscript
+// Compiles to React components
+component ScoreBoard {
+    home: 0,
+    away: 0,
+
+    render() {
+        return <div class="scoreboard">
+            Chelsea: {this.home} - Opponent: {this.away}
+        </div>
+    }
+}
+
+// Use in web apps
+export ScoreBoard for "react"
+```
+
+### 3. **p5.js Integration**
+```footballscript
+// Direct p5.js sketch generation
+sketch MatchDay {
+    setup() {
+        createCanvas(800, 500)
+        drawField()
+    }
+
+    draw() {
+        updatePlayers()
+        moveBall()
+    }
+}
+
+// Compiles to p5.js sketch
+export sketch for "p5"
+```
+
+### 4. **Canvas API Helpers**
+```footballscript
+// Simple drawing commands
+draw circle at (50, 50) size 20 color "blue"
+draw line from (0, 50) to (100, 50) color "white"
+draw text "CHELSEA FC" at (50, 10) size 24
+```
+
+## Educational Features
+
+### 1. **Progressive Tutorials**
+```footballscript
+// Built-in tutorial system
+tutorial "Your First Goal" {
+    step 1: "Create a player"
+    hint: "Type: player mount = 19"
+    check: variableExists("mount")
+
+    step 2: "Make Mount shoot"
+    hint: "Type: shoot(mount)"
+    check: functionCalled("shoot")
+
+    complete: "⚽ GOAL! You scored your first goal!"
+}
+```
+
+### 2. **Visual Debugger**
+```footballscript
+// See code execution visually
+debug on                 // Shows each step
+slowMotion(2x)           // Slow down animations
+showVariables()          // Display all variables
+trace(mount)             // Follow specific player
+```
+
+### 3. **Interactive Challenges**
+```footballscript
+challenge "Penalty Shootout" {
+    goal: "Score 3 penalties in a row"
+
+    starter code {
+        player shooter = ?
+        // Your code here
+    }
+
+    test {
+        checkGoals(3)
+        checkNoMisses()
+    }
+
+    reward: "🏆 Penalty Master Badge!"
+}
+```
+
+## Compiler Implementation (TypeScript)
+
+### Core Transpiler Structure
+Create in `/Users/daniel/dev/football-script/compiler/index.ts`:
+```typescript
+// Simplified AST → JavaScript transpilation
+class FootballScriptCompiler {
+    compile(source: string): string {
+        const ast = parse(source)
+        const js = transpile(ast)
+        return wrapWithRuntime(js)
+    }
+
+    wrapWithRuntime(js: string): string {
+        return `
+            import { FootballRuntime } from '@footballscript/runtime';
+            const runtime = new FootballRuntime();
+            ${js}
+        `
+    }
+}
+```
+
+### Runtime Library Design
+Create in `/Users/daniel/dev/football-script/runtime/index.js`:
+```javascript
+// Runtime provides visual bindings
+class FootballRuntime {
+    constructor() {
+        this.field = new FootballField()
+        this.players = new Map()
+        this.ball = new Ball()
+    }
+
+    // Maps FootballScript commands to visual actions
+    kick(player, ball) {
+        this.animate('kick', player, ball)
+        this.physics.applyForce(ball, player.kickPower)
+    }
+
+    // Integration with visual libraries
+    bindToReact(component) { /* ... */ }
+    bindToP5(sketch) { /* ... */ }
+    bindToCanvas(canvasId) { /* ... */ }
+}
+```
+
+## Web Playground Features
+
+### Browser-Based IDE
+- Syntax highlighting with Chelsea blue theme
+- Live preview panel showing field
+- Step-through debugger with visual execution
+- Challenge/tutorial sidebar
+- Share button for showing programs to friends
+
+### Key Features for Kids
+1. **Autocomplete with Pictures**: Shows player faces/sprites
+2. **Sound Effects**: Goals, whistles, crowd cheers
+3. **Achievements**: Unlock new players, stadiums, features
+4. **Gallery**: Share and play other kids' games
+5. **No Installation**: Runs entirely in browser
+
+## Sample Programs for Kids
+
+### 1. **Penalty Practice Game**
+```footballscript
+game "Penalty Practice" {
+    score = 0
+
+    repeat 5 times {
+        showGoalkeeper()
+
+        ask "Where to shoot? (left/center/right)" -> direction
+        keeper_position = randomChoice(["left", "center", "right"])
+
+        if (direction != keeper_position) {
+            goal()
+            score = score + 1
+            celebrate()
+        } else {
+            saved()
+            showMessage("Great save!")
+        }
+    }
+
+    showFinalScore(score)
+}
+```
+
+### 2. **Dribbling Challenge**
+```footballscript
+game "Hazard's Dribbling School" {
+    player hazard at (10, 50)
+
+    // Create obstacles
+    cones = createCones(5)
+
+    when arrow_keys pressed {
+        move hazard by arrow_direction
+
+        if (hazard touches cone) {
+            showMessage("Oops! Try again!")
+            reset hazard to (10, 50)
+        }
+
+        if (hazard reaches endzone) {
+            celebrate()
+            nextLevel()
+        }
+    }
+}
+```
+
+## Implementation Priorities
+
+### Phase 1: Core Educational Features (Week 1-2)
+1. Basic transpiler (variables, functions, loops) in `/Users/daniel/dev/football-script/compiler/`
+2. Visual runtime with canvas rendering in `/Users/daniel/dev/football-script/runtime/`
+3. Simple web playground in `/Users/daniel/dev/football-script/playground/`
+4. First 5 tutorials in `/Users/daniel/dev/football-script/tutorials/`
+5. Player sprite system in `/Users/daniel/dev/football-script/visual/`
+
+### Phase 2: Interactivity (Week 3)
+1. Event handling system
+2. Mouse/keyboard input
+3. Animation system
+4. Sound effects
+5. Debug visualizer
+
+### Phase 3: Integration (Week 4)
+1. React component export
+2. p5.js sketch generation
+3. Sharing system
+4. Achievement system
+5. Extended tutorials
+
+## Success Metrics
+
+### Educational Goals
+- Child can create a simple game within 1 hour
+- Concepts map clearly to real JavaScript
+- Progressive learning path is engaging
+- Visual feedback makes debugging fun
+- Child wants to show programs to friends
+
+### Technical Goals
+- Compiles to clean, readable JavaScript
+- Integrates seamlessly with React/p5.js
+- Runs smoothly in browser
+- No installation required
+- Mobile-friendly playground
+
+## Key Differences from Original Prompt
+
+1. **Simplified Syntax**: Removed complex features, focused on visual learning
+2. **JavaScript Target**: Compiles to JS instead of standalone interpreter
+3. **Visual First**: Every feature has visual representation
+4. **Progressive Learning**: Clear levels from beginner to advanced
+5. **Integration Focus**: Built to work with existing JS libraries
+6. **Kid-Friendly**: Achievements, sounds, animations, sharing
+7. **Browser-Based**: No installation needed, instant gratification
+
+## Final Notes
+
+The language should feel like playing a football video game while learning real programming concepts. Every line of code should produce visible, exciting results that make a 9-year-old want to write more code.
+
+**Remember**: Fun first, but with real educational value. When they outgrow FootballScript, they should be ready for JavaScript!
+
+## Implementation Output
+
+**IMPORTANT**: Generate all implementation files directly to the local filesystem at `/Users/daniel/dev/football-script/`. This includes:
+- Complete source code for the compiler
+- Runtime library files
+- Visual integration modules
+- Web playground application
+- Sample games and tutorials
+- Documentation files
+- Package.json and configuration files
+
+The implementation should be fully functional and ready to run from `/Users/daniel/dev/football-script/` with simple npm commands.

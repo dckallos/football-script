@@ -1,0 +1,712 @@
+// === VS CODE EXTENSION ===
+// /Users/daniel/dev/football-script/tools/ide-support/vscode/package.json
+{
+  "name": "footballscript-vscode",
+  "displayName": "FootballScript - Chelsea FC",
+  "description": "Code like a Chelsea legend with FootballScript support",
+  "version": "1.0.0",
+  "publisher": "footballscript",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Themes",
+    "Snippets",
+    "Education"
+  ],
+  "activationEvents": [
+    "onLanguage:footballscript"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "footballscript",
+      "aliases": ["FootballScript", "footballscript", "fsc"],
+      "extensions": [".fsc"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "footballscript",
+      "scopeName": "source.footballscript",
+      "path": "./syntaxes/footballscript.tmLanguage.json"
+    }],
+    "themes": [{
+      "label": "Stamford Bridge Blue",
+      "uiTheme": "vs-dark",
+      "path": "./themes/chelsea-theme.json"
+    }],
+    "snippets": [{
+      "language": "footballscript",
+      "path": "./snippets/footballscript.json"
+    }],
+    "commands": [
+      {
+        "command": "footballscript.run",
+        "title": "FootballScript: Run at Stamford Bridge"
+      },
+      {
+        "command": "footballscript.debug",
+        "title": "FootballScript: VAR Review (Debug)"
+      },
+      {
+        "command": "footballscript.format",
+        "title": "FootballScript: Format with Lampard Precision"
+      }
+    ]
+  }
+}
+
+---
+
+// /Users/daniel/dev/football-script/tools/ide-support/vscode/syntaxes/footballscript.tmLanguage.json
+{
+  "name": "FootballScript",
+  "scopeName": "source.footballscript",
+  "fileTypes": ["fsc"],
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#variables"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.footballscript",
+          "match": "\\b(if|else|for|while|drill|session|when|return)\\b"
+        },
+        {
+          "name": "keyword.declaration.footballscript",
+          "match": "\\b(player|striker|midfielder|defender|goalkeeper|blues|play|formation|team|game|match)\\b"
+        },
+        {
+          "name": "keyword.operator.footballscript",
+          "match": "\\b(to|from|at|in|times|until)\\b"
+        },
+        {
+          "name": "keyword.special.footballscript",
+          "match": "\\b(shoot|pass|tackle|move|dribble|celebrate|chant|highlight|sprint)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.footballscript",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.footballscript",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.footballscript",
+      "match": "\\b[0-9]+\\.?[0-9]*\\b"
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.footballscript",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.footballscript",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "functions": {
+      "name": "entity.name.function.footballscript",
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\("
+    },
+    "variables": {
+      "name": "variable.other.footballscript",
+      "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+    }
+  }
+}
+
+---
+
+// /Users/daniel/dev/football-script/tools/ide-support/vscode/snippets/footballscript.json
+{
+  "Create Player": {
+    "prefix": "player",
+    "body": [
+      "player ${1:name} = ${2:number}"
+    ],
+    "description": "Create a new Chelsea player"
+  },
+  "Shoot": {
+    "prefix": "shoot",
+    "body": [
+      "shoot(${1:player})"
+    ],
+    "description": "Make a player shoot at goal"
+  },
+  "Pass": {
+    "prefix": "pass",
+    "body": [
+      "pass(${1:from} to ${2:to})"
+    ],
+    "description": "Pass between players"
+  },
+  "Drill Loop": {
+    "prefix": "drill",
+    "body": [
+      "drill ${1:5} times {",
+      "\t$2",
+      "}"
+    ],
+    "description": "Create a training drill"
+  },
+  "Play Function": {
+    "prefix": "play",
+    "body": [
+      "play ${1:name}(${2:params}) {",
+      "\t$3",
+      "\treturn ${4:result}",
+      "}"
+    ],
+    "description": "Define a tactical play"
+  },
+  "Formation": {
+    "prefix": "formation",
+    "body": [
+      "formation ${1:Name} {",
+      "\tdefender backline = [${2}]",
+      "\tmidfielder midfield = [${3}]",
+      "\tstriker attack = [${4}]",
+      "\t",
+      "\tplay execute() {",
+      "\t\t$5",
+      "\t}",
+      "}"
+    ],
+    "description": "Create a team formation"
+  },
+  "Chelsea Celebration": {
+    "prefix": "goal",
+    "body": [
+      "shoot(${1:player})",
+      "celebrate()",
+      "chant(\"Chelsea! Chelsea! Chelsea!\")"
+    ],
+    "description": "Score and celebrate Chelsea style"
+  },
+  "Match Simulation": {
+    "prefix": "match",
+    "body": [
+      "match \"${1:Chelsea vs Opponent}\" {",
+      "\tblues minute = 0",
+      "\tblues score = 0",
+      "\t",
+      "\tsession until minute >= 90 {",
+      "\t\tminute++",
+      "\t\t$2",
+      "\t}",
+      "\t",
+      "\tfulltime()",
+      "}"
+    ],
+    "description": "Create a match simulation"
+  }
+}
+
+---
+
+// /Users/daniel/dev/football-script/tools/ide-support/vscode/themes/chelsea-theme.json
+{
+  "name": "Stamford Bridge Blue",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#001a33",
+    "editor.foreground": "#e0e0e0",
+    "editor.lineHighlightBackground": "#002244",
+    "editorCursor.foreground": "#FFD700",
+    "editor.selectionBackground": "#034694",
+    "sideBar.background": "#001122",
+    "sideBar.foreground": "#b0b0b0",
+    "activityBar.background": "#034694",
+    "activityBar.foreground": "#FFFFFF",
+    "statusBar.background": "#023373",
+    "statusBar.foreground": "#FFFFFF",
+    "titleBar.activeBackground": "#034694",
+    "titleBar.activeForeground": "#FFFFFF",
+    "button.background": "#034694",
+    "button.foreground": "#FFFFFF",
+    "button.hoverBackground": "#0a5eb0",
+    "terminal.background": "#001122",
+    "terminal.foreground": "#e0e0e0"
+  },
+  "tokenColors": [
+    {
+      "scope": "keyword",
+      "settings": {
+        "foreground": "#61dafb",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": "keyword.control",
+      "settings": {
+        "foreground": "#FFD700"
+      }
+    },
+    {
+      "scope": "string",
+      "settings": {
+        "foreground": "#98fb98"
+      }
+    },
+    {
+      "scope": "constant.numeric",
+      "settings": {
+        "foreground": "#ff9999"
+      }
+    },
+    {
+      "scope": "comment",
+      "settings": {
+        "foreground": "#808080",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": "entity.name.function",
+      "settings": {
+        "foreground": "#87ceeb",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": "variable",
+      "settings": {
+        "foreground": "#ffa500"
+      }
+    }
+  ]
+}
+
+---
+
+// === README.md ===
+// /Users/daniel/dev/football-script/README.md
+`# ⚽ FootballScript - Educational Programming Language for Young Chelsea Fans
+
+![Chelsea FC](https://img.shields.io/badge/Chelsea%20FC-034694?style=for-the-badge&logo=chelsea&logoColor=white)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
+
+**FootballScript** is an educational programming language designed to teach coding concepts to young Chelsea FC fans through football metaphors and visual programming. Every line of code creates exciting visual results on a virtual football pitch!
+
+## 🏟️ Features
+
+### 🎯 Educational First
+- **Progressive Learning**: Youth Academy → First Team → Champions League levels
+- **Visual Feedback**: See your code come to life on a football field
+- **Interactive Tutorials**: Learn through Chelsea-themed challenges
+- **Instant Results**: Every command has immediate visual impact
+
+### 💙 Chelsea FC Integration
+- Use real Chelsea players in your code
+- Stamford Bridge as your coding environment
+- Chelsea blue syntax highlighting
+- Celebrate goals with authentic Chelsea chants
+
+### 🚀 Technical Features
+- Compiles to JavaScript for web integration
+- React and p5.js support
+- Browser-based playground (no installation needed)
+- VS Code extension with IntelliSense
+
+## 📚 Quick Start
+
+### Installation
+
+\`\`\`bash
+# Install FootballScript globally
+npm install -g @footballscript/core
+
+# Or clone the repository
+git clone https://github.com/footballscript/core.git
+cd football-script
+npm install
+\`\`\`
+
+### Your First Program
+
+Create a file called \`first-goal.fsc\`:
+
+\`\`\`footballscript
+// My first FootballScript program!
+player mount = 19
+shoot(mount)
+celebrate()
+\`\`\`
+
+Run it:
+
+\`\`\`bash
+chelsea run first-goal.fsc
+\`\`\`
+
+### 🎮 Web Playground
+
+Start the interactive playground:
+
+\`\`\`bash
+chelsea playground
+# Opens http://localhost:3000 in your browser
+\`\`\`
+
+## 📖 Language Basics
+
+### Creating Players
+
+\`\`\`footballscript
+// Create Chelsea players
+player palmer = 20
+striker jackson = 15
+midfielder enzo = 8
+defender james = 24
+goalkeeper sanchez = 1
+\`\`\`
+
+### Basic Actions
+
+\`\`\`footballscript
+// Football actions
+shoot(palmer)           // Take a shot
+pass(enzo to palmer)   // Pass between players
+tackle(james)          // Make a tackle
+move palmer to (75, 50) // Move to position
+dribble(palmer)        // Dribble with ball
+celebrate()            // Celebrate a goal!
+\`\`\`
+
+### Loops and Drills
+
+\`\`\`footballscript
+// Training drills
+drill 5 times {
+    shoot(jackson)
+    celebrate()
+}
+
+// Keep practicing until we score
+session until goals == 3 {
+    shoot(palmer)
+    if (scored) {
+        goals = goals + 1
+    }
+}
+\`\`\`
+
+### Creating Plays
+
+\`\`\`footballscript
+// Define tactical plays
+play cornerKick() {
+    move james to (85, 20)
+    move jackson to (88, 50)
+    cross(james to jackson)
+    header(jackson)
+}
+
+// Execute the play
+cornerKick()
+\`\`\`
+
+### Formations and Teams
+
+\`\`\`footballscript
+formation Chelsea433 {
+    defenders: [james, silva, colwill, chilwell],
+    midfielders: [enzo, caicedo, palmer],
+    attackers: [sterling, jackson, mudryk],
+
+    play attack() {
+        pass(enzo to palmer)
+        pass(palmer to jackson)
+        shoot(jackson)
+    }
+}
+
+myTeam = new Chelsea433()
+myTeam.attack()
+\`\`\`
+
+## 🎓 Learning Path
+
+### Level 1: Youth Academy (Ages 8-10)
+- Variables and player creation
+- Basic actions (shoot, pass, move)
+- Simple loops
+- Visual coordinate system
+
+### Level 2: First Team (Ages 10-12)
+- Functions as tactical plays
+- Lists and squads
+- User input
+- Conditional logic
+
+### Level 3: Champions League (Ages 12+)
+- Classes and formations
+- Events and interactions
+- Advanced loops
+- Full game development
+
+## 🛠️ CLI Commands
+
+\`\`\`bash
+# Run a FootballScript program
+chelsea run game.fsc
+
+# Start interactive mode
+chelsea repl
+
+# Create a new project
+chelsea init my-game
+
+# Open visual playground
+chelsea playground
+
+# Run tests
+chelsea test
+
+# Format code
+chelsea format game.fsc
+
+# See all commands
+chelsea --help
+\`\`\`
+
+## 📝 Example Programs
+
+### Penalty Shootout
+\`\`\`footballscript
+player palmer = 20
+blues penalties = 5
+
+drill penalties times {
+    ask "Where to shoot? (left/right)" -> direction
+
+    if (shoot(palmer, direction) == "GOAL!") {
+        celebrate()
+        score++
+    }
+}
+
+showFinalScore(score)
+\`\`\`
+
+### Passing Drill
+\`\`\`footballscript
+midfielder mount = 19
+midfielder enzo = 8
+midfielder gallagher = 23
+
+drill 10 times {
+    pass(mount to enzo)
+    pass(enzo to gallagher)
+    pass(gallagher to mount)
+}
+\`\`\`
+
+## 🎨 VS Code Extension
+
+Install the FootballScript extension for:
+- Chelsea blue syntax highlighting
+- IntelliSense autocomplete
+- Code snippets
+- Integrated debugging
+- Live preview
+
+## 🏗️ Project Structure
+
+\`\`\`
+football-script/
+├── compiler/          # TypeScript compiler
+├── runtime/          # JavaScript runtime
+├── playground/       # Web-based IDE
+├── tutorials/        # Interactive lessons
+├── examples/         # Sample programs
+├── tools/           # Development tools
+│   └── vscode/      # VS Code extension
+└── docs/            # Documentation
+\`\`\`
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Chelsea FC for inspiration
+- Young coders learning with FootballScript
+- The open-source community
+
+## 🔗 Links
+
+- [Documentation](https://footballscript.dev/docs)
+- [Playground](https://play.footballscript.dev)
+- [Discord Community](https://discord.gg/footballscript)
+- [YouTube Tutorials](https://youtube.com/@footballscript)
+
+---
+
+**Keep The Blue Flag Flying High! 💙**
+
+Made with ⚽ and 💙 for young Chelsea fans learning to code.
+`
+
+---
+
+// === TESTING CONFIGURATION ===
+// /Users/daniel/dev/football-script/jest.config.js
+module.exports = {
+  testEnvironment: 'node',
+  roots: ['<rootDir>/tests'],
+  testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+  transform: {
+    '^.+\\.ts$': 'ts-jest',
+  },
+  collectCoverageFrom: [
+    'compiler/**/*.{js,ts}',
+    'runtime/**/*.js',
+    '!**/node_modules/**',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+};
+
+---
+
+// /Users/daniel/dev/football-script/tests/compiler.test.js
+const { FootballScriptCompiler } = require('../dist/compiler');
+
+describe('FootballScript Compiler', () => {
+  let compiler;
+
+  beforeEach(() => {
+    compiler = new FootballScriptCompiler();
+  });
+
+  test('compiles player declaration', () => {
+    const code = 'player mount = 19';
+    const result = compiler.compile(code);
+    expect(result).toContain('createPlayer');
+    expect(result).toContain('mount');
+    expect(result).toContain('19');
+  });
+
+  test('compiles shoot command', () => {
+    const code = 'shoot(mount)';
+    const result = compiler.compile(code);
+    expect(result).toContain('runtime.shoot');
+  });
+
+  test('compiles pass command', () => {
+    const code = 'pass(mount to havertz)';
+    const result = compiler.compile(code);
+    expect(result).toContain('runtime.pass');
+    expect(result).toContain('mount');
+    expect(result).toContain('havertz');
+  });
+
+  test('compiles drill loop', () => {
+    const code = 'drill 5 times { shoot(mount) }';
+    const result = compiler.compile(code);
+    expect(result).toContain('for');
+    expect(result).toContain('i < 5');
+  });
+
+  test('handles syntax errors gracefully', () => {
+    const code = 'player mount =';
+    expect(() => compiler.compile(code)).toThrow();
+  });
+});
+
+---
+
+// /Users/daniel/dev/football-script/.gitignore
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+.env
+.vscode/
+coverage/
+*.temp.js
+.cache/
+
+---
+
+// /Users/daniel/dev/football-script/tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020", "DOM"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "compiler/**/*",
+    "runtime/**/*",
+    "cli/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
+}

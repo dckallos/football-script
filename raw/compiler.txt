@@ -1,0 +1,972 @@
+// FootballScript Compiler - Full TypeScript Implementation
+// /Users/daniel/dev/football-script/compiler/index.ts
+
+import { Token, TokenType, Lexer } from './lexer';
+import { Parser, ASTNode } from './parser';
+import { Runtime } from './runtime';
+
+// === LEXER IMPLEMENTATION ===
+export enum TokenType {
+    // Keywords
+    PLAYER = 'PLAYER',
+    STRIKER = 'STRIKER',
+    MIDFIELDER = 'MIDFIELDER',
+    DEFENDER = 'DEFENDER',
+    GOALKEEPER = 'GOALKEEPER',
+    BLUES = 'BLUES',
+    PLAY = 'PLAY',
+    FORMATION = 'FORMATION',
+    DRILL = 'DRILL',
+    SESSION = 'SESSION',
+    TIMES = 'TIMES',
+    UNTIL = 'UNTIL',
+    IF = 'IF',
+    ELSE = 'ELSE',
+    WHEN = 'WHEN',
+    RETURN = 'RETURN',
+    PASS = 'PASS',
+    TO = 'TO',
+    SHOOT = 'SHOOT',
+    TACKLE = 'TACKLE',
+    MOVE = 'MOVE',
+    AT = 'AT',
+    CELEBRATE = 'CELEBRATE',
+
+    // Literals
+    NUMBER = 'NUMBER',
+    STRING = 'STRING',
+    IDENTIFIER = 'IDENTIFIER',
+
+    // Operators
+    ASSIGN = 'ASSIGN',
+    PLUS = 'PLUS',
+    MINUS = 'MINUS',
+    MULTIPLY = 'MULTIPLY',
+    DIVIDE = 'DIVIDE',
+    EQUALS = 'EQUALS',
+    NOT_EQUALS = 'NOT_EQUALS',
+    LESS_THAN = 'LESS_THAN',
+    GREATER_THAN = 'GREATER_THAN',
+
+    // Delimiters
+    LEFT_PAREN = 'LEFT_PAREN',
+    RIGHT_PAREN = 'RIGHT_PAREN',
+    LEFT_BRACE = 'LEFT_BRACE',
+    RIGHT_BRACE = 'RIGHT_BRACE',
+    LEFT_BRACKET = 'LEFT_BRACKET',
+    RIGHT_BRACKET = 'RIGHT_BRACKET',
+    COMMA = 'COMMA',
+    SEMICOLON = 'SEMICOLON',
+    NEWLINE = 'NEWLINE',
+
+    // Special
+    EOF = 'EOF',
+    COMMENT = 'COMMENT'
+}
+
+export class Token {
+    constructor(
+        public type: TokenType,
+        public value: any,
+        public line: number,
+        public column: number
+    ) {}
+}
+
+export class Lexer {
+    private position: number = 0;
+    private line: number = 1;
+    private column: number = 1;
+    private tokens: Token[] = [];
+
+    private keywords: Map<string, TokenType> = new Map([
+        ['player', TokenType.PLAYER],
+        ['striker', TokenType.STRIKER],
+        ['midfielder', TokenType.MIDFIELDER],
+        ['defender', TokenType.DEFENDER],
+        ['goalkeeper', TokenType.GOALKEEPER],
+        ['blues', TokenType.BLUES],
+        ['play', TokenType.PLAY],
+        ['formation', TokenType.FORMATION],
+        ['drill', TokenType.DRILL],
+        ['session', TokenType.SESSION],
+        ['times', TokenType.TIMES],
+        ['until', TokenType.UNTIL],
+        ['if', TokenType.IF],
+        ['else', TokenType.ELSE],
+        ['when', TokenType.WHEN],
+        ['return', TokenType.RETURN],
+        ['pass', TokenType.PASS],
+        ['to', TokenType.TO],
+        ['shoot', TokenType.SHOOT],
+        ['tackle', TokenType.TACKLE],
+        ['move', TokenType.MOVE],
+        ['at', TokenType.AT],
+        ['celebrate', TokenType.CELEBRATE]
+    ]);
+
+    constructor(private source: string) {}
+
+    tokenize(): Token[] {
+        while (!this.isAtEnd()) {
+            this.scanToken();
+        }
+
+        this.tokens.push(new Token(TokenType.EOF, null, this.line, this.column));
+        return this.tokens;
+    }
+
+    private scanToken(): void {
+        const char = this.advance();
+
+        switch (char) {
+            case ' ':
+            case '\r':
+            case '\t':
+                break;
+            case '\n':
+                this.line++;
+                this.column = 1;
+                break;
+            case '(':
+                this.addToken(TokenType.LEFT_PAREN, char);
+                break;
+            case ')':
+                this.addToken(TokenType.RIGHT_PAREN, char);
+                break;
+            case '{':
+                this.addToken(TokenType.LEFT_BRACE, char);
+                break;
+            case '}':
+                this.addToken(TokenType.RIGHT_BRACE, char);
+                break;
+            case '[':
+                this.addToken(TokenType.LEFT_BRACKET, char);
+                break;
+            case ']':
+                this.addToken(TokenType.RIGHT_BRACKET, char);
+                break;
+            case ',':
+                this.addToken(TokenType.COMMA, char);
+                break;
+            case ';':
+                this.addToken(TokenType.SEMICOLON, char);
+                break;
+            case '+':
+                this.addToken(TokenType.PLUS, char);
+                break;
+            case '-':
+                this.addToken(TokenType.MINUS, char);
+                break;
+            case '*':
+                this.addToken(TokenType.MULTIPLY, char);
+                break;
+            case '/':
+                if (this.peek() === '/') {
+                    this.scanComment();
+                } else {
+                    this.addToken(TokenType.DIVIDE, char);
+                }
+                break;
+            case '=':
+                if (this.peek() === '=') {
+                    this.advance();
+                    this.addToken(TokenType.EQUALS, '==');
+                } else {
+                    this.addToken(TokenType.ASSIGN, char);
+                }
+                break;
+            case '!':
+                if (this.peek() === '=') {
+                    this.advance();
+                    this.addToken(TokenType.NOT_EQUALS, '!=');
+                }
+                break;
+            case '<':
+                this.addToken(TokenType.LESS_THAN, char);
+                break;
+            case '>':
+                this.addToken(TokenType.GREATER_THAN, char);
+                break;
+            case '"':
+                this.scanString();
+                break;
+            default:
+                if (this.isDigit(char)) {
+                    this.scanNumber();
+                } else if (this.isAlpha(char)) {
+                    this.scanIdentifier();
+                }
+                break;
+        }
+    }
+
+    private scanComment(): void {
+        while (this.peek() !== '\n' && !this.isAtEnd()) {
+            this.advance();
+        }
+    }
+
+    private scanString(): void {
+        const start = this.position;
+
+        while (this.peek() !== '"' && !this.isAtEnd()) {
+            if (this.peek() === '\n') {
+                this.line++;
+                this.column = 0;
+            }
+            this.advance();
+        }
+
+        if (this.isAtEnd()) {
+            throw new Error(`Unterminated string at line ${this.line}`);
+        }
+
+        this.advance(); // Closing "
+
+        const value = this.source.substring(start, this.position - 1);
+        this.addToken(TokenType.STRING, value);
+    }
+
+    private scanNumber(): void {
+        const start = this.position - 1;
+
+        while (this.isDigit(this.peek())) {
+            this.advance();
+        }
+
+        if (this.peek() === '.' && this.isDigit(this.peekNext())) {
+            this.advance(); // Consume .
+
+            while (this.isDigit(this.peek())) {
+                this.advance();
+            }
+        }
+
+        const value = parseFloat(this.source.substring(start, this.position));
+        this.addToken(TokenType.NUMBER, value);
+    }
+
+    private scanIdentifier(): void {
+        const start = this.position - 1;
+
+        while (this.isAlphaNumeric(this.peek())) {
+            this.advance();
+        }
+
+        const text = this.source.substring(start, this.position);
+        const type = this.keywords.get(text.toLowerCase()) || TokenType.IDENTIFIER;
+        this.addToken(type, text);
+    }
+
+    private addToken(type: TokenType, value: any): void {
+        this.tokens.push(new Token(type, value, this.line, this.column));
+    }
+
+    private advance(): string {
+        this.column++;
+        return this.source[this.position++];
+    }
+
+    private peek(): string {
+        if (this.isAtEnd()) return '\0';
+        return this.source[this.position];
+    }
+
+    private peekNext(): string {
+        if (this.position + 1 >= this.source.length) return '\0';
+        return this.source[this.position + 1];
+    }
+
+    private isAtEnd(): boolean {
+        return this.position >= this.source.length;
+    }
+
+    private isDigit(char: string): boolean {
+        return char >= '0' && char <= '9';
+    }
+
+    private isAlpha(char: string): boolean {
+        return (char >= 'a' && char <= 'z') ||
+               (char >= 'A' && char <= 'Z') ||
+               char === '_';
+    }
+
+    private isAlphaNumeric(char: string): boolean {
+        return this.isAlpha(char) || this.isDigit(char);
+    }
+}
+
+// === PARSER IMPLEMENTATION ===
+export interface ASTNode {
+    type: string;
+    [key: string]: any;
+}
+
+export class Parser {
+    private current: number = 0;
+
+    constructor(private tokens: Token[]) {}
+
+    parse(): ASTNode {
+        const statements: ASTNode[] = [];
+
+        while (!this.isAtEnd()) {
+            statements.push(this.statement());
+        }
+
+        return {
+            type: 'Program',
+            body: statements
+        };
+    }
+
+    private statement(): ASTNode {
+        // Player declaration
+        if (this.match(TokenType.PLAYER, TokenType.STRIKER, TokenType.MIDFIELDER,
+                      TokenType.DEFENDER, TokenType.GOALKEEPER)) {
+            return this.playerDeclaration();
+        }
+
+        // Blues constant
+        if (this.match(TokenType.BLUES)) {
+            return this.bluesDeclaration();
+        }
+
+        // Play (function) declaration
+        if (this.match(TokenType.PLAY)) {
+            return this.playDeclaration();
+        }
+
+        // Formation (class) declaration
+        if (this.match(TokenType.FORMATION)) {
+            return this.formationDeclaration();
+        }
+
+        // Drill loop
+        if (this.match(TokenType.DRILL)) {
+            return this.drillLoop();
+        }
+
+        // Session while loop
+        if (this.match(TokenType.SESSION)) {
+            return this.sessionLoop();
+        }
+
+        // If statement
+        if (this.match(TokenType.IF)) {
+            return this.ifStatement();
+        }
+
+        // Expression statement
+        return this.expressionStatement();
+    }
+
+    private playerDeclaration(): ASTNode {
+        const position = this.previous().value;
+        const name = this.consume(TokenType.IDENTIFIER, "Expected player name");
+
+        if (this.match(TokenType.ASSIGN)) {
+            const value = this.expression();
+            return {
+                type: 'PlayerDeclaration',
+                position,
+                name: name.value,
+                value
+            };
+        }
+
+        return {
+            type: 'PlayerDeclaration',
+            position,
+            name: name.value,
+            value: null
+        };
+    }
+
+    private bluesDeclaration(): ASTNode {
+        const name = this.consume(TokenType.IDENTIFIER, "Expected constant name");
+        this.consume(TokenType.ASSIGN, "Expected '=' after constant name");
+        const value = this.expression();
+
+        return {
+            type: 'BluesDeclaration',
+            name: name.value,
+            value
+        };
+    }
+
+    private playDeclaration(): ASTNode {
+        const name = this.consume(TokenType.IDENTIFIER, "Expected play name");
+        this.consume(TokenType.LEFT_PAREN, "Expected '(' after play name");
+
+        const params: string[] = [];
+        if (!this.check(TokenType.RIGHT_PAREN)) {
+            do {
+                params.push(this.consume(TokenType.IDENTIFIER, "Expected parameter name").value);
+            } while (this.match(TokenType.COMMA));
+        }
+
+        this.consume(TokenType.RIGHT_PAREN, "Expected ')' after parameters");
+        this.consume(TokenType.LEFT_BRACE, "Expected '{' before play body");
+
+        const body: ASTNode[] = [];
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+            body.push(this.statement());
+        }
+
+        this.consume(TokenType.RIGHT_BRACE, "Expected '}' after play body");
+
+        return {
+            type: 'PlayDeclaration',
+            name: name.value,
+            params,
+            body
+        };
+    }
+
+    private formationDeclaration(): ASTNode {
+        const name = this.consume(TokenType.IDENTIFIER, "Expected formation name");
+        this.consume(TokenType.LEFT_BRACE, "Expected '{' after formation name");
+
+        const members: ASTNode[] = [];
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+            members.push(this.statement());
+        }
+
+        this.consume(TokenType.RIGHT_BRACE, "Expected '}' after formation body");
+
+        return {
+            type: 'FormationDeclaration',
+            name: name.value,
+            members
+        };
+    }
+
+    private drillLoop(): ASTNode {
+        const times = this.consume(TokenType.NUMBER, "Expected number of times");
+        this.consume(TokenType.TIMES, "Expected 'times' keyword");
+        this.consume(TokenType.LEFT_BRACE, "Expected '{' after drill declaration");
+
+        const body: ASTNode[] = [];
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+            body.push(this.statement());
+        }
+
+        this.consume(TokenType.RIGHT_BRACE, "Expected '}' after drill body");
+
+        return {
+            type: 'DrillLoop',
+            times: times.value,
+            body
+        };
+    }
+
+    private sessionLoop(): ASTNode {
+        this.consume(TokenType.UNTIL, "Expected 'until' keyword");
+        const condition = this.expression();
+        this.consume(TokenType.LEFT_BRACE, "Expected '{' after session condition");
+
+        const body: ASTNode[] = [];
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+            body.push(this.statement());
+        }
+
+        this.consume(TokenType.RIGHT_BRACE, "Expected '}' after session body");
+
+        return {
+            type: 'SessionLoop',
+            condition,
+            body
+        };
+    }
+
+    private ifStatement(): ASTNode {
+        this.consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'");
+        const condition = this.expression();
+        this.consume(TokenType.RIGHT_PAREN, "Expected ')' after if condition");
+        this.consume(TokenType.LEFT_BRACE, "Expected '{' after if condition");
+
+        const thenBranch: ASTNode[] = [];
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+            thenBranch.push(this.statement());
+        }
+
+        this.consume(TokenType.RIGHT_BRACE, "Expected '}' after if body");
+
+        let elseBranch: ASTNode[] | null = null;
+        if (this.match(TokenType.ELSE)) {
+            this.consume(TokenType.LEFT_BRACE, "Expected '{' after else");
+            elseBranch = [];
+            while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+                elseBranch.push(this.statement());
+            }
+            this.consume(TokenType.RIGHT_BRACE, "Expected '}' after else body");
+        }
+
+        return {
+            type: 'IfStatement',
+            condition,
+            thenBranch,
+            elseBranch
+        };
+    }
+
+    private expressionStatement(): ASTNode {
+        const expr = this.expression();
+        return {
+            type: 'ExpressionStatement',
+            expression: expr
+        };
+    }
+
+    private expression(): ASTNode {
+        return this.assignment();
+    }
+
+    private assignment(): ASTNode {
+        const expr = this.equality();
+
+        if (this.match(TokenType.ASSIGN)) {
+            const value = this.assignment();
+            return {
+                type: 'Assignment',
+                left: expr,
+                value
+            };
+        }
+
+        return expr;
+    }
+
+    private equality(): ASTNode {
+        let expr = this.comparison();
+
+        while (this.match(TokenType.EQUALS, TokenType.NOT_EQUALS)) {
+            const operator = this.previous();
+            const right = this.comparison();
+            expr = {
+                type: 'BinaryExpression',
+                operator: operator.value,
+                left: expr,
+                right
+            };
+        }
+
+        return expr;
+    }
+
+    private comparison(): ASTNode {
+        let expr = this.term();
+
+        while (this.match(TokenType.GREATER_THAN, TokenType.LESS_THAN)) {
+            const operator = this.previous();
+            const right = this.term();
+            expr = {
+                type: 'BinaryExpression',
+                operator: operator.value,
+                left: expr,
+                right
+            };
+        }
+
+        return expr;
+    }
+
+    private term(): ASTNode {
+        let expr = this.factor();
+
+        while (this.match(TokenType.PLUS, TokenType.MINUS)) {
+            const operator = this.previous();
+            const right = this.factor();
+            expr = {
+                type: 'BinaryExpression',
+                operator: operator.value,
+                left: expr,
+                right
+            };
+        }
+
+        return expr;
+    }
+
+    private factor(): ASTNode {
+        let expr = this.unary();
+
+        while (this.match(TokenType.MULTIPLY, TokenType.DIVIDE)) {
+            const operator = this.previous();
+            const right = this.unary();
+            expr = {
+                type: 'BinaryExpression',
+                operator: operator.value,
+                left: expr,
+                right
+            };
+        }
+
+        return expr;
+    }
+
+    private unary(): ASTNode {
+        if (this.match(TokenType.MINUS)) {
+            const operator = this.previous();
+            const right = this.unary();
+            return {
+                type: 'UnaryExpression',
+                operator: operator.value,
+                right
+            };
+        }
+
+        return this.call();
+    }
+
+    private call(): ASTNode {
+        let expr = this.primary();
+
+        while (true) {
+            if (this.match(TokenType.LEFT_PAREN)) {
+                expr = this.finishCall(expr);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    private finishCall(callee: ASTNode): ASTNode {
+        const args: ASTNode[] = [];
+
+        if (!this.check(TokenType.RIGHT_PAREN)) {
+            do {
+                args.push(this.expression());
+            } while (this.match(TokenType.COMMA));
+        }
+
+        this.consume(TokenType.RIGHT_PAREN, "Expected ')' after arguments");
+
+        return {
+            type: 'CallExpression',
+            callee,
+            arguments: args
+        };
+    }
+
+    private primary(): ASTNode {
+        if (this.match(TokenType.NUMBER)) {
+            return {
+                type: 'NumberLiteral',
+                value: this.previous().value
+            };
+        }
+
+        if (this.match(TokenType.STRING)) {
+            return {
+                type: 'StringLiteral',
+                value: this.previous().value
+            };
+        }
+
+        if (this.match(TokenType.IDENTIFIER)) {
+            const name = this.previous().value;
+
+            // Check for special football commands
+            if (name === 'shoot') {
+                return this.shootCommand();
+            }
+            if (name === 'pass') {
+                return this.passCommand();
+            }
+            if (name === 'move') {
+                return this.moveCommand();
+            }
+
+            return {
+                type: 'Identifier',
+                name
+            };
+        }
+
+        if (this.match(TokenType.LEFT_PAREN)) {
+            const expr = this.expression();
+            this.consume(TokenType.RIGHT_PAREN, "Expected ')' after expression");
+            return expr;
+        }
+
+        throw new Error(`Unexpected token at line ${this.peek().line}`);
+    }
+
+    private shootCommand(): ASTNode {
+        this.consume(TokenType.LEFT_PAREN, "Expected '(' after 'shoot'");
+        const player = this.expression();
+        this.consume(TokenType.RIGHT_PAREN, "Expected ')' after player");
+
+        return {
+            type: 'ShootCommand',
+            player
+        };
+    }
+
+    private passCommand(): ASTNode {
+        this.consume(TokenType.LEFT_PAREN, "Expected '(' after 'pass'");
+        const from = this.expression();
+        this.consume(TokenType.TO, "Expected 'to' in pass command");
+        const to = this.expression();
+        this.consume(TokenType.RIGHT_PAREN, "Expected ')' after pass command");
+
+        return {
+            type: 'PassCommand',
+            from,
+            to
+        };
+    }
+
+    private moveCommand(): ASTNode {
+        const player = this.expression();
+        this.consume(TokenType.TO, "Expected 'to' after player");
+        this.consume(TokenType.LEFT_PAREN, "Expected '(' for coordinates");
+        const x = this.expression();
+        this.consume(TokenType.COMMA, "Expected ',' between coordinates");
+        const y = this.expression();
+        this.consume(TokenType.RIGHT_PAREN, "Expected ')' after coordinates");
+
+        return {
+            type: 'MoveCommand',
+            player,
+            x,
+            y
+        };
+    }
+
+    private match(...types: TokenType[]): boolean {
+        for (const type of types) {
+            if (this.check(type)) {
+                this.advance();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private check(type: TokenType): boolean {
+        if (this.isAtEnd()) return false;
+        return this.peek().type === type;
+    }
+
+    private advance(): Token {
+        if (!this.isAtEnd()) this.current++;
+        return this.previous();
+    }
+
+    private isAtEnd(): boolean {
+        return this.peek().type === TokenType.EOF;
+    }
+
+    private peek(): Token {
+        return this.tokens[this.current];
+    }
+
+    private previous(): Token {
+        return this.tokens[this.current - 1];
+    }
+
+    private consume(type: TokenType, message: string): Token {
+        if (this.check(type)) return this.advance();
+        throw new Error(`${message} at line ${this.peek().line}`);
+    }
+}
+
+// === CODE GENERATOR ===
+export class CodeGenerator {
+    generate(ast: ASTNode): string {
+        return this.visitNode(ast);
+    }
+
+    private visitNode(node: ASTNode): string {
+        switch (node.type) {
+            case 'Program':
+                return node.body.map(stmt => this.visitNode(stmt)).join('\n');
+
+            case 'PlayerDeclaration':
+                const value = node.value ? this.visitNode(node.value) : 'null';
+                return `let ${node.name} = runtime.createPlayer('${node.name}', ${value});`;
+
+            case 'BluesDeclaration':
+                return `const ${node.name} = ${this.visitNode(node.value)};`;
+
+            case 'PlayDeclaration':
+                const params = node.params.join(', ');
+                const body = node.body.map(stmt => this.visitNode(stmt)).join('\n');
+                return `function ${node.name}(${params}) {\n${body}\n}`;
+
+            case 'FormationDeclaration':
+                const members = node.members.map(m => this.visitNode(m)).join('\n');
+                return `class ${node.name} {\n${members}\n}`;
+
+            case 'DrillLoop':
+                const drillBody = node.body.map(stmt => this.visitNode(stmt)).join('\n');
+                return `for (let i = 0; i < ${node.times}; i++) {\n${drillBody}\n}`;
+
+            case 'SessionLoop':
+                const sessionBody = node.body.map(stmt => this.visitNode(stmt)).join('\n');
+                const condition = this.visitNode(node.condition);
+                return `while (!(${condition})) {\n${sessionBody}\n}`;
+
+            case 'IfStatement':
+                const ifCond = this.visitNode(node.condition);
+                const thenBody = node.thenBranch.map(stmt => this.visitNode(stmt)).join('\n');
+                let code = `if (${ifCond}) {\n${thenBody}\n}`;
+                if (node.elseBranch) {
+                    const elseBody = node.elseBranch.map(stmt => this.visitNode(stmt)).join('\n');
+                    code += ` else {\n${elseBody}\n}`;
+                }
+                return code;
+
+            case 'ExpressionStatement':
+                return this.visitNode(node.expression) + ';';
+
+            case 'BinaryExpression':
+                const left = this.visitNode(node.left);
+                const right = this.visitNode(node.right);
+                return `(${left} ${node.operator} ${right})`;
+
+            case 'UnaryExpression':
+                return `${node.operator}${this.visitNode(node.right)}`;
+
+            case 'CallExpression':
+                const callee = this.visitNode(node.callee);
+                const args = node.arguments.map(arg => this.visitNode(arg)).join(', ');
+                return `${callee}(${args})`;
+
+            case 'ShootCommand':
+                const shooter = this.visitNode(node.player);
+                return `runtime.shoot(${shooter})`;
+
+            case 'PassCommand':
+                const from = this.visitNode(node.from);
+                const to = this.visitNode(node.to);
+                return `runtime.pass(${from}, ${to})`;
+
+            case 'MoveCommand':
+                const player = this.visitNode(node.player);
+                const x = this.visitNode(node.x);
+                const y = this.visitNode(node.y);
+                return `runtime.move(${player}, ${x}, ${y})`;
+
+            case 'NumberLiteral':
+                return String(node.value);
+
+            case 'StringLiteral':
+                return `"${node.value}"`;
+
+            case 'Identifier':
+                return node.name;
+
+            case 'Assignment':
+                const assignLeft = this.visitNode(node.left);
+                const assignValue = this.visitNode(node.value);
+                return `${assignLeft} = ${assignValue}`;
+
+            default:
+                throw new Error(`Unknown node type: ${node.type}`);
+        }
+    }
+}
+
+// === MAIN COMPILER CLASS ===
+export class FootballScriptCompiler {
+    private lexer: Lexer;
+    private parser: Parser;
+    private generator: CodeGenerator;
+
+    compile(source: string): string {
+        try {
+            // Lexical analysis
+            this.lexer = new Lexer(source);
+            const tokens = this.lexer.tokenize();
+
+            // Parsing
+            this.parser = new Parser(tokens);
+            const ast = this.parser.parse();
+
+            // Code generation
+            this.generator = new CodeGenerator();
+            const jsCode = this.generator.generate(ast);
+
+            // Wrap with runtime
+            return this.wrapWithRuntime(jsCode);
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`⚽ Compilation Error: ${error.message}`);
+            }
+            throw error;
+        }
+    }
+
+    private wrapWithRuntime(code: string): string {
+        return `
+// FootballScript Runtime Wrapper
+(function() {
+    const runtime = window.footballScriptRuntime || new FootballRuntime();
+
+    ${code}
+})();
+        `;
+    }
+
+    // Compile to React component
+    compileToReact(source: string, componentName: string = 'FootballGame'): string {
+        const jsCode = this.compile(source);
+
+        return `
+import React, { useEffect, useRef } from 'react';
+import { FootballRuntime } from '@footballscript/runtime';
+
+export const ${componentName} = () => {
+    const canvasRef = useRef(null);
+    const runtimeRef = useRef(null);
+
+    useEffect(() => {
+        if (canvasRef.current) {
+            const runtime = new FootballRuntime(canvasRef.current);
+            runtimeRef.current = runtime;
+
+            ${jsCode}
+        }
+    }, []);
+
+    return (
+        <div className="football-game">
+            <canvas ref={canvasRef} width={800} height={500} />
+        </div>
+    );
+};
+        `;
+    }
+
+    // Compile to p5.js sketch
+    compileToP5(source: string): string {
+        const jsCode = this.compile(source);
+
+        return `
+// FootballScript p5.js Sketch
+let runtime;
+
+function setup() {
+    createCanvas(800, 500);
+    runtime = new FootballRuntime(canvas);
+
+    ${jsCode}
+}
+
+function draw() {
+    runtime.update();
+    runtime.render();
+}
+        `;
+    }
+}
+
+// === EXPORT FOR USE ===
+export default FootballScriptCompiler;
