@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.22"]
+build-backend = "hatchling.build"
+
+[project]
+name = "football-script"
+version = "0.1.0"
+description = "FootballScript: a Python-first programming language"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Porch Analytics", email = "opensource@porchanalytics.com" }]
+requires-python = ">=3.11"
+dependencies = []
+
+# Dev extras you can install with: pip install -e ".[dev]"
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-cov>=5",
+  "pre-commit>=3.7",
+  "ruff>=0.5",
+  "black>=24.8",
+  "isort>=5.13",
+  "mypy>=1.10",
+  "coverage>=7.5",
+]
+
+# CLI entry points (console scripts)
+[project.scripts]
+chelsea = "football_script.cli:main"
+stamford = "football_script.stamford_cli:main"
+
+[project.urls]
+Homepage = "https://github.com/porchanalytics/football-script"
+Issues = "https://github.com/porchanalytics/football-script/issues"
+
+# Tool config (quality gates)
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+src = ["src"]
+extend-select = ["I"]  # isort-like import sorting via Ruff
+
+[tool.isort]
+profile = "black"
+known_first_party = ["football_script"]
+src_paths = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_optional = true
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
