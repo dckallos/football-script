@@ -22,3 +22,9 @@ def test_async_runs():
     if callable(g.get("main")):
         if asyncio.iscoroutinefunction(g["main"]):
             asyncio.run(g["main"]())
+            
+def test_leading_comment_and_blank_line():
+    g = run_fs('// comment only line\\n\\n'
+               'def main(){ print("ok"); }\\n'
+               'main()\\n')
+    assert "main" in g
