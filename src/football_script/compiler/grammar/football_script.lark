@@ -1,0 +1,52 @@
+\
+// Minimal v1 grammar (LALR). Statements separated by newline or ';'.
+%import common.CNAME -> NAME
+%import common.SIGNED_NUMBER -> NUMBER
+%import common.ESCAPED_STRING -> STRING
+%import common.WS_INLINE
+%ignore WS_INLINE
+%ignore /#[^\n]*/
+%ignore /\/\/[^\n]*/
+
+SEP: /[;\n]+/
+
+start: module
+module: (statement SEP)* statement?
+
+?statement: simple_stmt | compound_stmt
+
+?simple_stmt: assign | return_stmt | expr
+assign: NAME "=" expr
+return_stmt: "return" expr?
+
+?compound_stmt: funcdef | async_funcdef | if_stmt | while_stmt | import_stmt
+
+funcdef: "def" NAME "(" [params] ")" block
+async_funcdef: "async" "def" NAME "(" [params] ")" block
+params: NAME ("," NAME)*
+
+block: "{" (statement SEP)* statement? "}"
+
+if_stmt: "if" expr block ("else" block)?
+while_stmt: "while" expr block
+
+import_stmt: "import" dotted_name ["as" NAME]
+dotted_name: NAME ("." NAME)*
+
+?expr: or_expr
+?or_expr: and_expr ("or" and_expr)*
+?and_expr: not_expr ("and" not_expr)*
+?not_expr: "not" not_expr | comparison
+?comparison: sum (comp_op sum)*
+comp_op: "=="| "!=" | "<" | "<=" | ">" | ">="
+
+?sum: term (("+"|"-") term)*
+?term: factor (("*"|"/"|"%" ) factor)*
+?factor: ("+"|"-"|"await") factor | call
+?call: primary ("(" [arglist] ")")*
+arglist: expr ("," expr)*
+
+?primary: parallel | atom
+parallel: "parallel" "{" [arglist] "}"
+
+?atom: NAME | NUMBER | STRING | "true" -> true | "false" -> false | "none" -> none | "(" expr ")"
