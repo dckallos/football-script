@@ -11,7 +11,7 @@
 SEP: /[;\n]+/
 
 start: module
-module: (statement SEP)* statement?
+module: SEP* (statement (SEP+ statement)*)? SEP*
 
 ?statement: simple_stmt | compound_stmt
 
